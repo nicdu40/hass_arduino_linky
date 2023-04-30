@@ -2,8 +2,31 @@
 # -- coding: utf-8 --
 import serial, re,  time, socket, os, MySQLdb
 import paho.mqtt.publish as publish
+import paho.mqtt.client as mqtt
+usb = '/dev/ttyUSB1'
+
+def on_connect(client, userdata, flags, rc):  # The callback for when the client connects to the broker print("Connected with result code {0}".format(str(rc)))  
+    # Print result of connection attempt 
+    client.subscribe("homeassistant/switch/#")  
+    # Subscribe to the topic “digitest/test1”, receive any messages     published on it
 
 
+def on_message(client, userdata, msg):  # The callback for when a PUBLISH message is received from the server. 
+#	print("Message received-> " + msg.topic + " " + str(msg.payload))  # Print a received msg
+	serial_port = open( usb ,"w")
+	data_to_whrite= ""
+	status=str(msg.payload).split("'")[1]
+	OUT= msg.topic.split("/")[2].split("T")[1]
+	if len(OUT) < 2:
+		OUT=("0"+OUT)
+	if re.match('ON', (status)):
+		data_to_whrite = ("O" + OUT + "1")
+		#print(data_to_whrite)
+	if re.match('OFF', (status)):
+		data_to_whrite = ("O" + OUT + "0")
+		#print(data_to_whrite)
+	serial_port.write(data_to_whrite + "{}\n")
+	serial_port.close()
 
 
 dbConn = MySQLdb.connect("localhost","root","seign055e","mesures") or die ("could not connect to database")
@@ -38,23 +61,33 @@ mysqlduplicatecolumn = 1060 # MySQL error code when INSERT finds a duplicate
 #UDP_PORT = 8125
 #UDP_IP2 = "127.0.0.1"
 #UDP_PORT2 = 1223
-usb = '/dev/ttyUSB1'
-fichier = open( usb ,"w")
+
+serial_port = open( usb ,"w")
 ser = serial.Serial( usb , 115200)
 file_out_NEW_data_etat = '/var/www/netdata/etat/NEW_data_etat'
 file_out_NEW_last_etat = '/var/www/netdata/etat/NEW_last_etat'
 
+
+client = mqtt.Client("digi_mqtt_test")  # Create instance of client with client ID “digi_mqtt_test”
+client.on_connect = on_connect  # Define callback function for successful connection
+client.on_message = on_message  # Define callback function for receipt of a message
+client.connect('127.0.0.1', 1883)
+
+
 while True:
+	client.loop_start()
 	#ser.flushInput()
 	data = ser.readline().decode()
 	
 	if re.match('^!(.)', (data)): # remet à l'heure arduino
+		serial_port = open( usb ,"w")
 		epoch_time = int(time.time())
 		epoch_time += 7200
 #		epoch_time += 3600
 		print(epoch_time)
-		fichier.write("~{}\n".format(epoch_time))
+		serial_port.write("~{}\n".format(epoch_time))
 		print(data)
+		serial_port.close()
 	else:
 		if ";" in data:
 			longueur = len(data)
@@ -104,9 +137,20 @@ while True:
 								#MESSAGE2 = '%s:%s|h\n' % (indice, valeur) #netdata							
 								
 								#mosquitto_pub -h 127.0.0.1 -p 1883 -t "homeassistant/sensor/%s/state" -m '{ "temperature": %s }' % (indice, valeur)
-
-								jsonMsg = "{\"temperature\":%s}" % (valeur)
-								topic = "homeassistant/sensor/%s/state" % (indice)
+								if "OUT" in indice:
+									topic = "homeassistant/switch/%s/state" % (indice)
+									if "1" in valeur:
+										jsonMsg = "ON"
+									else:
+										jsonMsg = "OFF"
+									
+									
+								else:	
+									topic = "homeassistant/sensor/%s/state" % (indice)
+									jsonMsg = "{\"temperature\":%s}" % (valeur)
+								
+								
+								
 								
 								publish.single(topic, jsonMsg, hostname="127.0.0.1" )
 								
