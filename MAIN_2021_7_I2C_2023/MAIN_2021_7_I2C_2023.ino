@@ -381,7 +381,7 @@ void loop() {
     switch (Etat[output]) {
       case EtatBoot:        // ==> démarrage (4)
         TURN (off, output);
-        Etat[output] = EtatAutoOFF;
+        Etat[output] = EtatManuOFF;
         break;
 
       case EtatManuOFF:        // ==> arrêt manuellement
@@ -389,68 +389,6 @@ void loop() {
 
       case EtatManuON:       // ==> marche manuelle
         break;
-
-      case EtatAutoOFF:          // auto OFF (2)
-        ///////////////////////////////
-        if (millis() > Wait_boot + 2000) {
-          if (output == 5) {///////////////////////////////////piscine
-            if ((Temp[2] >= Temp[4] + DeltaTempStart)&&(PAPP==0)) {
-                  TURN (on, output);/// A decommenter si pas de Bug
-              Etat[output] = EtatAutoON;
-            }
-          }
-          ///////////////////////////////
-          if (output == 7) {//photovolaique piscine
-            if ((PAPP >= 100) && (hour() >= 6) && (hour() < 23)) {
-              //     TURN (on, output);/// A decommenter si pas de Bug
-              Etat[output] = EtatAutoON;
-            }
-          }
-          ///////////////////////////////
-          if (output == 9 || output == 8) { //photovolaique toit delestage
-            if (timeStatus() == timeSet && (PAPP) && (AMP)) {
-              // if ((PAPP >= 0) && (AMP >= 0)) { //// test si présent
-              if (((PAPP < 600) ) && ((hour() >= 6) && (hour() < 23)) ) {
-                //&& ( Power_max_solaire > 700  )
-                //|| (AMP < 3)
-                //     TURN (on, output);/// A decommenter si pas de Bug
-                Etat[output] = EtatAutoON;
-              }
-            }
-          }
-        }
-        ///////////////////////////////
-        break;
-
-      case EtatAutoON:   // auto ON (3)
-        ///////////////////////////////
-        if (output == 5) {/////////////piscine
-          if ((Temp[2] <= Temp[4] + DeltaTempStop)||(PAPP>900)) {
-            TURN (off, output);
-            Etat[output] = EtatAutoOFF;
-          }
-        }
-        ///////////////////////////////
-        if (output == 7) {//photovolaique piscine
-          if ((timeStatus() == timeSet) && (PAPP) && (AMP)) {
-            if ((PAPP < 100) || (hour() < 6) || (hour() >= 23)) {
-              TURN (off, output);
-              Etat[output] = EtatAutoOFF;
-            }
-          }
-        }
-        ///////////////////////////////
-        if (output == 9 || output == 8) { //photovolaique toit delestage
-          if ((timeStatus() == timeSet) && (PAPP) && (AMP)) {
-            if (((PAPP - 200) > 700)  || ((hour() < 6) && (hour() > 23))) {
-              // || (Power_max_solaire < 300)
-              TURN (off, output);
-              Etat[output] = EtatAutoOFF;
-            }
-          }
-        }
-        break;
-
     } /// puis last etat ............
 
     if (LastEtat[output] != Etat[output]) {
