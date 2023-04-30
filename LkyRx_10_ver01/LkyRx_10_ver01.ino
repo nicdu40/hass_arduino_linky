@@ -55,7 +55,7 @@ void loop()
 
 #ifdef LKY_IMono
   if (Linky.iinstIsNew())  {
-Send_String = String(Linky.iinst()) + 'A' ;
+    Send_String = String(Linky.iinst()) + 'A' ;
     Serial << Send_String << endl;
     Wire.beginTransmission(NANO_Master);
     Wire.print(Send_String);

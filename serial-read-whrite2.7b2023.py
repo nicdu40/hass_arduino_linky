@@ -64,6 +64,7 @@ mysqlduplicatecolumn = 1060 # MySQL error code when INSERT finds a duplicate
 
 serial_port = open( usb ,"w")
 ser = serial.Serial( usb , 115200)
+serial_port.write("R{}\n") #reset
 file_out_NEW_data_etat = '/var/www/netdata/etat/NEW_data_etat'
 file_out_NEW_last_etat = '/var/www/netdata/etat/NEW_last_etat'
 

@@ -52,8 +52,8 @@ unsigned int Recept_ser_lky_int;
 unsigned int PAPPmax;
 unsigned int INJECTION ;
 unsigned int INJECTION_old_ser;
-byte Tarif ;
-byte Tarif_old ;
+unsigned int Tarif;
+unsigned int Tarif_old=10;
 
 //////////////////////////////      Anémometre/////////////////
 volatile unsigned int Rotations; // cup rotation counter used in interrupt routine
@@ -524,12 +524,20 @@ void LINKY_DECODE () {
     Recept_ser_lky_int = (10 * Recept_ser_lky_int) + (Recept_ser_lky[pos] - '0') ;
   }
   memset(Recept_ser_lky, 0, sizeof(Recept_ser_lky));
-  if ((Type == 'P') || (Type == 'C')) {
+  if ((Type == 'L') || (Type == 'M') || (Type == 'N') || (Type == 'O') || (Type == 'P') || (Type == 'Q')) {
     PAPP = Recept_ser_lky_int * 10;
-    if (Type == 'C')
+    if (Type == 'L')
       Tarif = 0;
-    else
+    else if (Type == 'M')
       Tarif = 1;
+    else if (Type == 'N')
+      Tarif = 2;
+    else if (Type == 'O')
+      Tarif = 3;
+    else if (Type == 'P')
+      Tarif = 4;
+    else if (Type == 'Q')
+      Tarif = 5;          
   }
   else if ((Type == 'A')) {
     AMP = Recept_ser_lky_int ;
