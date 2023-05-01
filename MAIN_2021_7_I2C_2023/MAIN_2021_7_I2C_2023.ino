@@ -202,10 +202,55 @@ void setup()  {
   }
   delay(10);
 
+
+
+///////////linky_reset ///////
+  Send_Timestamp_Serial();
+  Serial.print(F(";CONSO_max=0"));
+  Serial.print(F(";injection=0"));
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   Wire.begin(I2C_SLAVE_ADDRESS);
   Wire.onReceive(receiveEvents);
 
+
+
+
+
+
+
+
+
+
+
+
+
   enableInterrupt( WindSensorPin, isr_rotation, CHANGE );
+
+
+
+
+
+
+
+
+
+
+
 }
 ///////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////      END SETUP      ////////////////////////////////////

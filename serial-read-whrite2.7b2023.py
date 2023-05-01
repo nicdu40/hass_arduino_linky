@@ -29,7 +29,7 @@ def on_message(client, userdata, msg):  # The callback for when a PUBLISH messag
 	serial_port.close()
 
 
-dbConn = MySQLdb.connect("localhost","root","seign055e","mesures") or die ("could not connect to database")
+dbConn = MySQLdb.connect("localhost","root","****","mesures") or die ("could not connect to database")
 #open a cursor to the database
 cursor = dbConn.cursor()
 
@@ -57,10 +57,6 @@ if row == None:
 
 
 mysqlduplicatecolumn = 1060 # MySQL error code when INSERT finds a duplicate
-#UDP_IP = "192.168.101.1"
-#UDP_PORT = 8125
-#UDP_IP2 = "127.0.0.1"
-#UDP_PORT2 = 1223
 
 serial_port = open( usb ,"w")
 ser = serial.Serial( usb , 115200)
@@ -77,7 +73,6 @@ client.connect('127.0.0.1', 1883)
 
 while True:
 	client.loop_start()
-	#ser.flushInput()
 	data = ser.readline().decode()
 	
 	if re.match('^!(.)', (data)): # remet à l'heure arduino
@@ -95,9 +90,7 @@ while True:
 			if longueur >= 2:
 				for line in data:
 					print(data)
-#					sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
 					fields = data.split(";")
-#					sock.sendto(data, (UDP_IP2, UDP_PORT2)) #netdata pour graphes
 					i = 1
 					while i < 100:
 						try:
@@ -124,7 +117,6 @@ while True:
 								"""
 							
 								try:								
-									#SQL_lit  = 'insert into Donnees (%s) VALUES (%%s)' % (indice)
 									SQL_lit = "UPDATE Last SET %s = %%s where id = 1" % (indice)
 									cursor.execute(SQL_lit, [valeur])
 									dbConn.commit() #commit the insert
@@ -133,77 +125,21 @@ while True:
 									cursor.execute(SQL_lit2)
 									SQL_lit = "UPDATE Last SET %s = %%s where id = 1" % (indice)
 									cursor.execute(SQL_lit, [valeur])
-
-								#MESSAGE = '%s:%s|g\n' % (indice, valeur) #netdata
-								#MESSAGE2 = '%s:%s|h\n' % (indice, valeur) #netdata							
-								
-								#mosquitto_pub -h 127.0.0.1 -p 1883 -t "homeassistant/sensor/%s/state" -m '{ "temperature": %s }' % (indice, valeur)
+					
 								if "OUT" in indice:
 									topic = "homeassistant/switch/%s/state" % (indice)
 									if "1" in valeur:
 										jsonMsg = "ON"
 									else:
 										jsonMsg = "OFF"
-									
-									
+																	
 								else:	
 									topic = "homeassistant/sensor/%s/state" % (indice)
 									jsonMsg = "{\"temperature\":%s}" % (valeur)
 								
-								
-								
-								
 								publish.single(topic, jsonMsg, hostname="127.0.0.1" )
 								
-								
-								if "OUT" in indice: # recupere l'état des sorties
-									separate = indice.split("T")	#le T du "OUT"
-									num_out = (separate[1])
-									v = 0
-									if "2" in valeur:
-										valeur = '<img src="auto-off.jpeg" height="42" width="42">'
-								
-									if "3" in valeur:
-										valeur = '<img src="auto-on.jpeg" height="42" width="42">'
-									
-									if "0" in valeur:
-										valeur = '<img src="off.jpeg" height="42" width="42">'
-									
-									if "1" in valeur:
-										valeur = '<img src="on.jpeg" height="42" width="42">'     
-
-									file_out= '/var/www/netdata/etat/etat-%s' % (num_out)
-									
-									valeur_NEW_data_etat = '%s' % (num_out)
-									try:
-										etat = open(file_out,"r+") 
-										string = etat.read()
-										if valeur != string:
-											etat.seek(0)
-											etat.truncate()
-											etat.write("{}".format(valeur))
-											etat.close()
-									except IOError:
-										print("error rw")
-								else:
-									v +=1
-									if v > 2:                          
-										valeur_NEW_data_etat = 0
-								try:
-										NEW_data_etat_status = open(file_out_NEW_data_etat,"r+") 
-										string = NEW_data_etat_status.read()
-										if valeur_NEW_data_etat != string:
-											NEW_data_etat_status.seek(0)
-											NEW_data_etat_status.truncate()
-											NEW_data_etat_status.write("{}".format(valeur_NEW_data_etat))
-											NEW_data_etat_status.close()
-								except IOError:
-									print("error rw")
-
-								#if "ABSENT" not in MESSAGE:
-								#	sock.sendto(MESSAGE.encode(), (UDP_IP, UDP_PORT)) # netdata
 							i += 1
 						except IndexError:
-#							sock.close()
 							i = 100
 					break
