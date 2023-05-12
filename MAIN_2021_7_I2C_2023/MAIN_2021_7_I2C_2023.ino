@@ -54,6 +54,15 @@ unsigned int INJECTION ;
 unsigned int INJECTION_old_ser;
 unsigned int Tarif;
 unsigned int Tarif_old=10;
+unsigned int index;
+unsigned long diff_time_index;
+unsigned int conso;
+unsigned int conso_old_ser;
+unsigned long last_index_time;
+
+
+
+
 
 //////////////////////////////      Anémometre/////////////////
 volatile unsigned int Rotations; // cup rotation counter used in interrupt routine
@@ -212,40 +221,13 @@ void setup()  {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
   Wire.begin(I2C_SLAVE_ADDRESS);
   Wire.onReceive(receiveEvents);
 
 
 
 
-
-
-
-
-
-
-
-
-
   enableInterrupt( WindSensorPin, isr_rotation, CHANGE );
-
-
-
-
-
-
 
 
 
@@ -364,6 +346,27 @@ void loop() {
     Send_Timestamp_Serial();
     Serial.print(F(";AMP=")); Serial.print(AMP);
   }
+unsigned long now_index=millis();
+  if ((now_index-last_index_time)>20000){ //si la différence en mS entre l'avant derniere et la derniere prise de mesure > 20 secondes 
+    
+    diff_time_index = (now_index - last_index_time); //calcul le laps de temps precis en mS
+    if (index==0)//évite la division par 0
+    conso=0; 
+    else{
+    conso= index*3600000/diff_time_index; //index=nombre de nouvel index(en WH); En heure donc 3600000 millisecondes
+    last_index_time=now_index;
+    Send_Timestamp_Serial();
+    Serial.print(F(";index_ind=")); Serial.print(index);
+    index=0;
+    }    
+  }
+    
+  if (conso != conso_old_ser) {
+    conso_old_ser = conso;
+    
+    Send_Timestamp_Serial();
+    Serial.print(F(";conso=")); Serial.print(conso);
+  }
 
   if (PAPP != PAPP_old_ser) {
     //  if (PAPP < (AMP * 230 + 500)) {
@@ -384,14 +387,16 @@ void loop() {
     PAPP_old_ser = PAPP;
   }
 
-  if (PAPP == 0) {
-    INJECTION = AMP * 240 ;
-    if (INJECTION != INJECTION_old_ser) {
+  if (PAPP == 0) 
+    INJECTION = AMP * 240;
+  else 
+    INJECTION = 0;
+  if (INJECTION != INJECTION_old_ser) {
       INJECTION_old_ser = INJECTION;
       Send_Timestamp_Serial();
-      Serial.print(F(";injection:")); Serial.print(INJECTION);
-    }
+      Serial.print(F(";injection=")); Serial.print(INJECTION);
   }
+  
 
   //////////////////////////           Power_solaire         /////////////////////////////////////////////
   if (Mesure_A2 > MESURE_MAX_SOLAIRE_2)
@@ -569,6 +574,7 @@ void LINKY_DECODE () {
     Recept_ser_lky_int = (10 * Recept_ser_lky_int) + (Recept_ser_lky[pos] - '0') ;
   }
   memset(Recept_ser_lky, 0, sizeof(Recept_ser_lky));
+  memset(Recept_ser_lky, 0, 5);  
   if ((Type == 'L') || (Type == 'M') || (Type == 'N') || (Type == 'O') || (Type == 'P') || (Type == 'Q')) {
     PAPP = Recept_ser_lky_int * 10;
     if (Type == 'L')
@@ -586,6 +592,11 @@ void LINKY_DECODE () {
   }
   else if ((Type == 'A')) {
     AMP = Recept_ser_lky_int ;
+  }
+  else if ((Type == 'I')) {
+    index+= Recept_ser_lky_int ;
+    
+   
   }
 }
 

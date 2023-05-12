@@ -23,11 +23,10 @@ V06 : MicroQuettas mars 2018
 _tpo07b : "tempo" tarif, tested OK on 22/03/18.
 
 ***********************************************************************/
-
+// TODO : dont
 /***************************** Includes *******************************/
 #include <string.h>
 #include <Streaming.h>
-
 #include "LinkyHistTIC_tpo.h"
 
 //#define LINKYDEBUG true

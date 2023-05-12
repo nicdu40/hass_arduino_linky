@@ -31,6 +31,8 @@ const uint8_t pin_LkyRx = 10;
 char T = 'P'; //tarif
 String Send_String;
 
+uint32_t diff[6] ;
+uint32_t Linky_Index_old[6];
 /************************* Object instanciation ***********************/
 LinkyHistTIC_tpo Linky(pin_LkyRx);
 
@@ -63,10 +65,12 @@ void loop()
   Linky.Update();
 
 
-  for (i = Linky.hcjb; i <= Linky.hpjr; i++)
+  for (i = Linky.hcjb; i <= Linky.hpjr; i++)//hcjb, hpjb, hcjw, hpjw,hcjr, hpjr
+  
     {
     if (Linky.IndexIsNew(i))
       {/*
+            
       Serial << F("Index ") << i << F(" = ") << \
                 Linky.Index(i) << F(" Wh") << endl;
       Serial << F("0 : HC j bleu, 1 : HP j bleu, ") \
@@ -74,6 +78,26 @@ void loop()
       Serial << F("3 : HP j blanc, 4 : HC j rouge, ") \
              << F("5 : HP j rouge.") << endl;
       */
+      //Serial << F("Index ") << i << F(" = ") << Linky.Index(i) << F(" Wh") << endl;
+     
+      diff[i]= Linky.Index(i)-Linky_Index_old[i];
+      //conso=(diff)*3600000/(time_new-time_old);
+      //Serial << F("diff index ") << i << F(" = ") << diff[i]  << endl; 
+      //Serial << F("time_diff ") << i << F(" = ") << time_new-time_old  << endl;
+      
+      //time_old=time_new; 
+      if (millis()/1000>10){
+        Send_String = String(diff[i]) + 'I';//index
+        Serial << Send_String << endl;
+        Wire.beginTransmission(NANO_Master);
+        Wire.print(Send_String);
+        Wire.endTransmission();
+      }
+      Linky_Index_old[i]=Linky.Index(i);
+         
+      //Serial << millis()/1000 << endl;   
+      //Serial << conso << endl;
+      
       if (i == 0)
       T='L';  
       else if (i == 1)
@@ -126,12 +150,13 @@ void loop()
 
   if (Linky.PappIsNew())
     {
-    Send_String = String(Linky.Papp() / 10) + T;
-    Serial << Send_String << endl;
-    Wire.beginTransmission(NANO_Master);
-    Wire.print(Send_String);
-    Wire.endTransmission();
+      if (millis()/1000>10){
+      Send_String = String(Linky.Papp() / 10) + T;
+      Serial << Send_String << endl;
+      Wire.beginTransmission(NANO_Master);
+      Wire.print(Send_String);
+      Wire.endTransmission();
+      }
     }
-
   };
 
